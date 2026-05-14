@@ -104,6 +104,7 @@ func appendDiagsHasErr(out *diag.Diagnostics, in diag.Diagnostics) bool {
 func (p *sopsProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		datasources.NewFileDataSource,
+		datasources.NewExternalDataSource,
 	}
 }
 func (p *sopsProvider) EphemeralResources(_ context.Context) []func() ephemeral.EphemeralResource {
