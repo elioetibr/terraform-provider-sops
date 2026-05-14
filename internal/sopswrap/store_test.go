@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
 func TestStoreFor_KnownFormats(t *testing.T) {
