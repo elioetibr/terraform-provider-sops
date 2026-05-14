@@ -14,6 +14,7 @@ import (
 	"github.com/elioetibr/terraform-provider-sops/internal/datasources"
 	sopsephemeral "github.com/elioetibr/terraform-provider-sops/internal/ephemeral"
 	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/resources"
 	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
@@ -115,7 +116,9 @@ func (p *sopsProvider) EphemeralResources(_ context.Context) []func() ephemeral.
 	}
 }
 func (p *sopsProvider) Resources(_ context.Context) []func() resource.Resource {
-	return nil
+	return []func() resource.Resource{
+		resources.NewFileResource,
+	}
 }
 func (p *sopsProvider) Functions(_ context.Context) []func() function.Function {
 	return nil

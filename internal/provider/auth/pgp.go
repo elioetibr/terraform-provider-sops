@@ -9,6 +9,7 @@ import (
 
 	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	epschema "github.com/hashicorp/terraform-plugin-framework/ephemeral/schema"
+	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 // PGPModel is the terraform-plugin-framework data model for the `pgp { ... }` block.
@@ -33,6 +34,17 @@ func PGPBlockSchemaForDataSource() dsschema.Block {
 		Description: "Per-resource PGP / GnuPG override.",
 		Attributes: map[string]dsschema.Attribute{
 			"gnupg_home": dsschema.StringAttribute{Optional: true},
+		},
+	}
+}
+
+// PGPBlockSchemaForResource returns the resource/schema Block for the `pgp` nested block.
+// Mirrors PGPBlockSchemaForDataSource() but uses the resource/schema type hierarchy.
+func PGPBlockSchemaForResource() rschema.Block {
+	return rschema.SingleNestedBlock{
+		Description: "Per-resource PGP / GnuPG override.",
+		Attributes: map[string]rschema.Attribute{
+			"gnupg_home": rschema.StringAttribute{Optional: true},
 		},
 	}
 }
