@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	epschema "github.com/hashicorp/terraform-plugin-framework/ephemeral/schema"
 )
 
 // GCPModel is the terraform-plugin-framework data model for the `gcp { ... }` block.
@@ -41,6 +42,20 @@ func GCPBlockSchemaForDataSource() dsschema.Block {
 			"credentials_file":            dsschema.StringAttribute{Optional: true},
 			"impersonate_service_account": dsschema.StringAttribute{Optional: true},
 			"quota_project":               dsschema.StringAttribute{Optional: true},
+		},
+	}
+}
+
+// GCPBlockSchemaForEphemeral returns the ephemeral/schema Block for the `gcp` nested block.
+// Mirrors GCPBlockSchemaForDataSource() but uses the ephemeral/schema type hierarchy.
+func GCPBlockSchemaForEphemeral() epschema.Block {
+	return epschema.SingleNestedBlock{
+		Description: "Per-resource GCP KMS credential override.",
+		Attributes: map[string]epschema.Attribute{
+			"credentials":                 epschema.StringAttribute{Optional: true, Sensitive: true},
+			"credentials_file":            epschema.StringAttribute{Optional: true},
+			"impersonate_service_account": epschema.StringAttribute{Optional: true},
+			"quota_project":               epschema.StringAttribute{Optional: true},
 		},
 	}
 }

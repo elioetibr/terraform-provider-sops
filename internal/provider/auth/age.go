@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	epschema "github.com/hashicorp/terraform-plugin-framework/ephemeral/schema"
 )
 
 // AgeModel is the terraform-plugin-framework data model for the `age { ... }` block.
@@ -41,6 +42,20 @@ func AgeBlockSchemaForDataSource() dsschema.Block {
 			"key_file":             dsschema.StringAttribute{Optional: true},
 			"key_command":          dsschema.StringAttribute{Optional: true},
 			"ssh_private_key_file": dsschema.StringAttribute{Optional: true},
+		},
+	}
+}
+
+// AgeBlockSchemaForEphemeral returns the ephemeral/schema Block for the `age` nested block.
+// Mirrors AgeBlockSchemaForDataSource() but uses the ephemeral/schema type hierarchy.
+func AgeBlockSchemaForEphemeral() epschema.Block {
+	return epschema.SingleNestedBlock{
+		Description: "Per-resource age key override.",
+		Attributes: map[string]epschema.Attribute{
+			"key":                  epschema.StringAttribute{Optional: true, Sensitive: true},
+			"key_file":             epschema.StringAttribute{Optional: true},
+			"key_command":          epschema.StringAttribute{Optional: true},
+			"ssh_private_key_file": epschema.StringAttribute{Optional: true},
 		},
 	}
 }

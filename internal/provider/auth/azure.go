@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	epschema "github.com/hashicorp/terraform-plugin-framework/ephemeral/schema"
 )
 
 // AzureModel is the terraform-plugin-framework data model for the `azure { ... }` block.
@@ -50,6 +51,23 @@ func AzureBlockSchemaForDataSource() dsschema.Block {
 			"use_oidc":              dsschema.BoolAttribute{Optional: true},
 			"use_workload_identity": dsschema.BoolAttribute{Optional: true},
 			"use_cli":               dsschema.BoolAttribute{Optional: true},
+		},
+	}
+}
+
+// AzureBlockSchemaForEphemeral returns the ephemeral/schema Block for the `azure` nested block.
+// Mirrors AzureBlockSchemaForDataSource() but uses the ephemeral/schema type hierarchy.
+func AzureBlockSchemaForEphemeral() epschema.Block {
+	return epschema.SingleNestedBlock{
+		Description: "Per-resource Azure Key Vault credential override.",
+		Attributes: map[string]epschema.Attribute{
+			"tenant_id":             epschema.StringAttribute{Optional: true},
+			"client_id":             epschema.StringAttribute{Optional: true},
+			"client_secret":         epschema.StringAttribute{Optional: true, Sensitive: true},
+			"use_msi":               epschema.BoolAttribute{Optional: true},
+			"use_oidc":              epschema.BoolAttribute{Optional: true},
+			"use_workload_identity": epschema.BoolAttribute{Optional: true},
+			"use_cli":               epschema.BoolAttribute{Optional: true},
 		},
 	}
 }

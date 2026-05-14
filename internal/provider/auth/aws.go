@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	epschema "github.com/hashicorp/terraform-plugin-framework/ephemeral/schema"
 )
 
 // AWSModel is the terraform-plugin-framework data model for the `aws { ... }` block.
@@ -76,6 +77,31 @@ func AWSBlockSchemaForDataSource() dsschema.Block {
 					"session_name": dsschema.StringAttribute{Optional: true},
 					"external_id":  dsschema.StringAttribute{Optional: true},
 					"duration":     dsschema.StringAttribute{Optional: true},
+				},
+			},
+		},
+	}
+}
+
+// AWSBlockSchemaForEphemeral returns the ephemeral/schema Block for the `aws` nested block.
+// Mirrors AWSBlockSchemaForDataSource() but uses the ephemeral/schema type hierarchy.
+func AWSBlockSchemaForEphemeral() epschema.Block {
+	return epschema.SingleNestedBlock{
+		Description: "Per-resource AWS KMS credential override.",
+		Attributes: map[string]epschema.Attribute{
+			"profile":                  epschema.StringAttribute{Optional: true},
+			"region":                   epschema.StringAttribute{Optional: true},
+			"shared_config_files":      epschema.ListAttribute{Optional: true, ElementType: types.StringType},
+			"shared_credentials_files": epschema.ListAttribute{Optional: true, ElementType: types.StringType},
+			"env":                      epschema.MapAttribute{Optional: true, ElementType: types.StringType},
+		},
+		Blocks: map[string]epschema.Block{
+			"assume_role": epschema.SingleNestedBlock{
+				Attributes: map[string]epschema.Attribute{
+					"role_arn":     epschema.StringAttribute{Optional: true},
+					"session_name": epschema.StringAttribute{Optional: true},
+					"external_id":  epschema.StringAttribute{Optional: true},
+					"duration":     epschema.StringAttribute{Optional: true},
 				},
 			},
 		},

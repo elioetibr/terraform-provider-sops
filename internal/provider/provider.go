@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 
 	"github.com/elioetibr/terraform-provider-sops/internal/datasources"
+	sopsephemeral "github.com/elioetibr/terraform-provider-sops/internal/ephemeral"
 	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
@@ -108,7 +109,9 @@ func (p *sopsProvider) DataSources(_ context.Context) []func() datasource.DataSo
 	}
 }
 func (p *sopsProvider) EphemeralResources(_ context.Context) []func() ephemeral.EphemeralResource {
-	return nil
+	return []func() ephemeral.EphemeralResource{
+		sopsephemeral.NewFileEphemeral,
+	}
 }
 func (p *sopsProvider) Resources(_ context.Context) []func() resource.Resource {
 	return nil
