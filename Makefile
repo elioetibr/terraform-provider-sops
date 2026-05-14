@@ -22,5 +22,5 @@ tidy:
 	$(GO) mod tidy
 
 install: build
-	mkdir -p ~/.terraform.d/plugins/registry.terraform.io/elioseverojunior/sops/$(VERSION)/$(OS)_$(ARCH)
-	cp $(BINARY) ~/.terraform.d/plugins/registry.terraform.io/elioseverojunior/sops/$(VERSION)/$(OS)_$(ARCH)/
+	mkdir -p ~/.terraform.d/plugins/registry.terraform.io/elioetibr/sops/$(VERSION)/$(OS)_$(ARCH)
+	cp $(BINARY) ~/.terraform.d/plugins/registry.terraform.io/elioetibr/sops/$(VERSION)/$(OS)_$(ARCH)/

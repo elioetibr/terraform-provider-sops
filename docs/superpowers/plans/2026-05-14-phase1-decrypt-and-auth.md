@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship `elioseverojunior/sops` v0.1.0 — a Terraform provider that decrypts SOPS files with first-class AWS/GCP/Azure/age/PGP credential configuration at provider, alias, and per-resource level. Drop-in attribute-compatible with `carlpett/sops`, but kills the `AWS_PROFILE=…` export requirement.
+**Goal:** Ship `elioetibr/sops` v0.1.0 — a Terraform provider that decrypts SOPS files with first-class AWS/GCP/Azure/age/PGP credential configuration at provider, alias, and per-resource level. Drop-in attribute-compatible with `carlpett/sops`, but kills the `AWS_PROFILE=…` export requirement.
 
 **Architecture:** Built on `terraform-plugin-framework`. Bypasses SOPS's high-level `decrypt.Data()` helper (which has no per-call credential support) and instead constructs `kms.MasterKey` / `gcpkms.MasterKey` / `azkv.MasterKey` / `age.MasterKey` / `pgp.MasterKey` structs directly with injected credentials, then drives `tree.Metadata.GetDataKeyWithKeyServices()` and `tree.Decrypt()`. A weighted semaphore around every decrypt call eliminates the carlpett #126 concurrency bug.
 
@@ -18,7 +18,7 @@ Created in this plan (Phase 1 only):
 
 ```
 terraform-provider-sops/
-├── go.mod                                            # module github.com/elioseverojunior/terraform-provider-sops
+├── go.mod                                            # module github.com/elioetibr/terraform-provider-sops
 ├── go.sum
 ├── main.go                                           # framework plugin entrypoint
 ├── Makefile                                          # build/test/lint convenience
@@ -90,13 +90,14 @@ terraform-provider-sops/
 - **No `Co-Authored-By` trailers** ever. Required by same.
 - **Go style:** prefer interfaces for testability, structured Kubernetes-style logging (`tflog`), worker pools for concurrency. SOLID/DRY/KISS.
 - **Test framework:** stdlib `testing` + `github.com/stretchr/testify/require` for assertions; `github.com/hashicorp/terraform-plugin-testing` for acceptance tests.
-- **TDD:** every component task is *test → fail → implement → pass → commit*.
+- **TDD:** every component task is _test → fail → implement → pass → commit_.
 
 ---
 
 ### Task 1: Project scaffold
 
 **Files:**
+
 - Create: `go.mod`
 - Create: `go.sum` (generated)
 - Create: `main.go`
@@ -107,16 +108,18 @@ terraform-provider-sops/
 - [ ] **Step 1: Initialize Go module**
 
 Run:
+
 ```bash
-cd /Volumes/Development/pessoal/elioseverojunior/go/terraform-sops-provider
-go mod init github.com/elioseverojunior/terraform-provider-sops
+cd /Volumes/Development/pessoal/elioetibr/go/terraform-sops-provider
+go mod init github.com/elioetibr/terraform-provider-sops
 ```
 
-Expected: creates `go.mod` with `module github.com/elioseverojunior/terraform-provider-sops` and `go 1.23` (or whatever current toolchain is).
+Expected: creates `go.mod` with `module github.com/elioetibr/terraform-provider-sops` and `go 1.23` (or whatever current toolchain is).
 
 - [ ] **Step 2: Add core dependencies**
 
 Run:
+
 ```bash
 go get github.com/hashicorp/terraform-plugin-framework@latest
 go get github.com/getsops/sops/v3@latest
@@ -141,7 +144,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider"
 )
 
 func TestProviderBuilds(t *testing.T) {
@@ -158,7 +161,7 @@ func TestProviderBuilds(t *testing.T) {
 - [ ] **Step 4: Run the test — expect fail (no provider package yet)**
 
 Run: `go test ./internal/provider/...`
-Expected: FAIL with `package github.com/elioseverojunior/terraform-provider-sops/internal/provider: no Go files`.
+Expected: FAIL with `package github.com/elioetibr/terraform-provider-sops/internal/provider: no Go files`.
 
 - [ ] **Step 5: Write the minimal `provider.New` stub**
 
@@ -227,7 +230,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider"
 )
 
 var version = "dev"
@@ -238,7 +241,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/elioseverojunior/sops",
+		Address: "registry.terraform.io/elioetibr/sops",
 		Debug:   debug,
 	}
 
@@ -275,8 +278,8 @@ tidy:
 	$(GO) mod tidy
 
 install: build
-	mkdir -p ~/.terraform.d/plugins/registry.terraform.io/elioseverojunior/sops/$(VERSION)/darwin_arm64
-	cp $(BINARY) ~/.terraform.d/plugins/registry.terraform.io/elioseverojunior/sops/$(VERSION)/darwin_arm64/
+	mkdir -p ~/.terraform.d/plugins/registry.terraform.io/elioetibr/sops/$(VERSION)/darwin_arm64
+	cp $(BINARY) ~/.terraform.d/plugins/registry.terraform.io/elioetibr/sops/$(VERSION)/darwin_arm64/
 ```
 
 - [ ] **Step 9: Add `.golangci.yml`**
@@ -305,7 +308,7 @@ linters:
 
 linters-settings:
   goimports:
-    local-prefixes: github.com/elioseverojunior/terraform-provider-sops
+    local-prefixes: github.com/elioetibr/terraform-provider-sops
 ```
 
 - [ ] **Step 10: Add `tools/tools.go` for dev-tool pinning**
@@ -331,7 +334,7 @@ Expected: no errors.
 git add go.mod go.sum main.go Makefile .golangci.yml tools/tools.go internal/provider/provider.go internal/provider/provider_test.go
 git commit -S -m "feat: scaffold provider with framework skeleton
 
-- Module: github.com/elioseverojunior/terraform-provider-sops
+- Module: github.com/elioetibr/terraform-provider-sops
 - terraform-plugin-framework provider that builds and serves
 - Empty schema; DataSources/EphemeralResources/Resources/Functions stubs
 - Makefile, golangci config, tools.go for tfplugindocs pin"
@@ -344,6 +347,7 @@ git commit -S -m "feat: scaffold provider with framework skeleton
 The single struct that every layer (data source, ephemeral, sopswrap) consumes. Defines the shape of credentials for every key source.
 
 **Files:**
+
 - Create: `internal/provider/auth/types.go`
 - Create: `internal/provider/auth/types_test.go`
 
@@ -359,7 +363,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 func TestConfigZeroValue(t *testing.T) {
@@ -391,7 +395,7 @@ func TestConfigAssumeRoleNested(t *testing.T) {
 - [ ] **Step 2: Run — expect fail**
 
 Run: `go test ./internal/provider/auth/...`
-Expected: FAIL with `package github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth: no Go files`.
+Expected: FAIL with `package github.com/elioetibr/terraform-provider-sops/internal/provider/auth: no Go files`.
 
 - [ ] **Step 3: Implement `types.go`**
 
@@ -481,6 +485,7 @@ git commit -S -m "feat(auth): add Config type with AWS/GCP/Azure/age/PGP nested 
 Implements the leaf-field overlay semantics from spec §5.3.
 
 **Files:**
+
 - Create: `internal/provider/auth/merge.go`
 - Create: `internal/provider/auth/merge_test.go`
 
@@ -497,7 +502,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 func TestMerge_EmptyPerCallReturnsProvider(t *testing.T) {
@@ -717,7 +722,7 @@ func mergePGP(p, c PGPConfig) PGPConfig {
 - [ ] **Step 4: Run — expect pass**
 
 Run: `go test ./internal/provider/auth/... -v -run TestMerge`
-Expected: all six TestMerge_* PASS.
+Expected: all six TestMerge\_\* PASS.
 
 - [ ] **Step 5: Commit**
 
@@ -740,6 +745,7 @@ Per-call config overlays provider-level config field-by-field:
 Translates a Terraform `aws { ... }` HCL block into `auth.AWSConfig`.
 
 **Files:**
+
 - Create: `internal/provider/auth/aws.go`
 - Create: `internal/provider/auth/aws_test.go`
 
@@ -758,7 +764,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 func TestAWSModelToConfig_AllFields(t *testing.T) {
@@ -962,7 +968,7 @@ func path(parts ...string) fwpath.Path {
 - [ ] **Step 4: Run — expect pass**
 
 Run: `go test ./internal/provider/auth/... -v -run TestAWSModel`
-Expected: all three TestAWSModelToConfig_* PASS.
+Expected: all three TestAWSModelToConfig\_\* PASS.
 
 - [ ] **Step 5: Commit**
 
@@ -980,6 +986,7 @@ git commit -S -m "feat(auth): AWS schema block and Model.ToConfig
 ### Task 5: GCP auth schema + model→Config
 
 **Files:**
+
 - Create: `internal/provider/auth/gcp.go`
 - Create: `internal/provider/auth/gcp_test.go`
 
@@ -997,7 +1004,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 func TestGCPModelToConfig_AllFields(t *testing.T) {
@@ -1094,6 +1101,7 @@ git commit -S -m "feat(auth): GCP schema block and Model.ToConfig"
 ### Task 6: Azure auth schema + model→Config
 
 **Files:**
+
 - Create: `internal/provider/auth/azure.go`
 - Create: `internal/provider/auth/azure_test.go`
 
@@ -1111,7 +1119,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 func TestAzureModelToConfig_OIDC(t *testing.T) {
@@ -1217,6 +1225,7 @@ workload identity, and CLI credential sources."
 ### Task 7: age auth schema + model→Config
 
 **Files:**
+
 - Create: `internal/provider/auth/age.go`
 - Create: `internal/provider/auth/age_test.go`
 
@@ -1234,7 +1243,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 func TestAgeModelToConfig_KeyFile(t *testing.T) {
@@ -1329,6 +1338,7 @@ git commit -S -m "feat(auth): age schema block and Model.ToConfig"
 ### Task 8: PGP auth schema + model→Config
 
 **Files:**
+
 - Create: `internal/provider/auth/pgp.go`
 - Create: `internal/provider/auth/pgp_test.go`
 
@@ -1346,7 +1356,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 func TestPGPModelToConfig(t *testing.T) {
@@ -1425,6 +1435,7 @@ git commit -S -m "feat(auth): PGP schema block and Model.ToConfig"
 We need encrypted files we can decrypt in unit tests without cloud creds. Use `age-keygen` + `sops` CLI to generate fixtures committed under `testdata/`.
 
 **Files:**
+
 - Create: `testdata/age-key.txt`
 - Create: `testdata/secrets.yaml`
 - Create: `testdata/secrets.json`
@@ -1435,21 +1446,25 @@ We need encrypted files we can decrypt in unit tests without cloud creds. Use `a
 - [ ] **Step 1: Confirm prerequisites**
 
 Run:
+
 ```bash
 which age-keygen
 which sops
 ```
+
 Expected: both binaries present. If not, install (`brew install age sops`).
 
 - [ ] **Step 2: Generate the age key**
 
 Run:
+
 ```bash
-cd /Volumes/Development/pessoal/elioseverojunior/go/terraform-sops-provider
+cd /Volumes/Development/pessoal/elioetibr/go/terraform-sops-provider
 age-keygen -o testdata/age-key.txt
 PUB=$(grep 'public key:' testdata/age-key.txt | awk '{print $NF}')
 echo "Public key: $PUB"
 ```
+
 Expected: prints an `age1...` recipient.
 
 - [ ] **Step 3: Write the plaintext source files**
@@ -1471,9 +1486,9 @@ Create `testdata/_plain/secrets.json`:
 
 ```json
 {
-  "database": {"host": "db.example.com", "password": "hunter2"},
+  "database": { "host": "db.example.com", "password": "hunter2" },
   "api_key": "sk-test-12345",
-  "nested": {"list": ["one", "two"]}
+  "nested": { "list": ["one", "two"] }
 }
 ```
 
@@ -1497,6 +1512,7 @@ key = sk-test-12345
 ```
 
 Create `testdata/_plain/secrets.bin` (random bytes):
+
 ```bash
 head -c 128 /dev/urandom > testdata/_plain/secrets.bin
 ```
@@ -1504,6 +1520,7 @@ head -c 128 /dev/urandom > testdata/_plain/secrets.bin
 - [ ] **Step 4: Encrypt the fixtures**
 
 Run:
+
 ```bash
 export SOPS_AGE_RECIPIENTS="$PUB"
 sops --encrypt --input-type yaml   --output-type yaml   testdata/_plain/secrets.yaml > testdata/secrets.yaml
@@ -1518,10 +1535,12 @@ Expected: 5 encrypted files in `testdata/`; each contains a `sops:` metadata sec
 - [ ] **Step 5: Sanity-check round-trip**
 
 Run:
+
 ```bash
 export SOPS_AGE_KEY_FILE="testdata/age-key.txt"
 sops --decrypt testdata/secrets.yaml
 ```
+
 Expected: prints the original plaintext YAML.
 
 - [ ] **Step 6: Commit**
@@ -1541,6 +1560,7 @@ Plaintext sources kept in testdata/_plain/ for fixture regeneration."
 Each SOPS-supported format has a corresponding `Store` type in `github.com/getsops/sops/v3/stores/{yaml,json,dotenv,ini,binary}`. This task wraps the dispatch.
 
 **Files:**
+
 - Create: `internal/sopswrap/store.go`
 - Create: `internal/sopswrap/store_test.go`
 
@@ -1556,7 +1576,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
 func TestStoreFor_KnownFormats(t *testing.T) {
@@ -1711,6 +1731,7 @@ falls back to binary, matching the sops CLI."
 Fixes carlpett #126.
 
 **Files:**
+
 - Create: `internal/sopswrap/concurrency.go`
 - Create: `internal/sopswrap/concurrency_test.go`
 
@@ -1730,7 +1751,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
 func TestSemaphore_RespectsLimit(t *testing.T) {
@@ -1842,6 +1863,7 @@ Default limit is 4; configurable via provider block concurrency_limit."
 Translates a decrypted `sops.Tree` into the three output shapes the data source exposes.
 
 **Files:**
+
 - Create: `internal/sopswrap/output.go`
 - Create: `internal/sopswrap/output_test.go`
 
@@ -1859,7 +1881,7 @@ import (
 	sops "github.com/getsops/sops/v3"
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
 func TestFlatten_NestedMap(t *testing.T) {
@@ -2101,6 +2123,7 @@ Provides the three output shapes a data source exposes:
 The **core architectural decision** of this provider lives here. Given an `auth.Config` and the encrypted tree's metadata (which carries the KMS ARNs / GCP resource IDs / etc.), reconstruct `MasterKey` structs with our injected credentials so SOPS can fetch the data key.
 
 **Files:**
+
 - Create: `internal/sopswrap/masterkey.go`
 - Create: `internal/sopswrap/masterkey_test.go`
 
@@ -2119,8 +2142,8 @@ import (
 	"github.com/getsops/sops/v3/kms"
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
 func TestRebuildKeyGroups_InjectsAWSProfile(t *testing.T) {
@@ -2192,7 +2215,7 @@ import (
 	"github.com/getsops/sops/v3/kms"
 	"github.com/getsops/sops/v3/pgp"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 // RebuildKeyGroups walks an encrypted tree's key groups and reconstructs each
@@ -2302,6 +2325,7 @@ the provider Configure path (wired up next)."
 Glues Store + Concurrency + MasterKey rebuilding + tree decrypt + Output together.
 
 **Files:**
+
 - Create: `internal/sopswrap/decrypt.go`
 - Create: `internal/sopswrap/decrypt_test.go`
 
@@ -2321,8 +2345,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
 func setAgeEnv(t *testing.T) {
@@ -2443,7 +2467,7 @@ import (
 	"github.com/getsops/sops/v3/aes"
 	"github.com/getsops/sops/v3/keyservice"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 // Package-level semaphore. Provider's Configure may swap it out.
@@ -2642,6 +2666,7 @@ git commit -S -m "feat(sopswrap): orchestrator Decrypt() with scoped env + concu
 Wires the auth blocks into the framework provider. Configuring the provider builds the package-level `providerConfig` and exposes it via `req.ProviderData`.
 
 **Files:**
+
 - Modify: `internal/provider/provider.go`
 - Create: `internal/provider/models.go`
 - Modify: `internal/provider/provider_test.go`
@@ -2678,7 +2703,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider"
 )
 ```
 
@@ -2697,7 +2722,7 @@ package provider
 import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 // ProviderModel is the framework data model for the `provider "sops" { ... }` block.
@@ -2797,8 +2822,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 ```
 
@@ -2823,6 +2848,7 @@ the sopswrap package-level semaphore."
 ### Task 16: `data "sops_file"` data source
 
 **Files:**
+
 - Create: `internal/datasources/file.go`
 - Create: `internal/datasources/file_test.go`
 - Modify: `internal/provider/provider.go` (register the data source)
@@ -2844,7 +2870,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider"
 )
 
 var protoV6Factory = map[string]func() (tfprotov6.ProviderServer, error){
@@ -2940,6 +2966,7 @@ output "pwd" { value = data.sops_file.x.data["database.password"] }
 ```
 
 Add testing dep if not already:
+
 ```bash
 go get github.com/hashicorp/terraform-plugin-testing@latest
 ```
@@ -2966,8 +2993,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
 // ProviderDataAccessor is what the provider hands us via DataSourceData.
@@ -3093,8 +3120,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
 func metadataAttribute() schema.SingleNestedAttribute {
@@ -3241,7 +3268,7 @@ func (p *ProviderData) ProviderAuthConfig() auth.Config { return p.Config }
 In `provider.go`:
 
 ```go
-import "github.com/elioseverojunior/terraform-provider-sops/internal/datasources"
+import "github.com/elioetibr/terraform-provider-sops/internal/datasources"
 
 func (p *sopsProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
@@ -3274,6 +3301,7 @@ git commit -S -m "feat(datasource): sops_file with per-resource auth overrides
 Same shape as `sops_file` but reads ciphertext from a string attribute, not the filesystem.
 
 **Files:**
+
 - Create: `internal/datasources/external.go`
 - Create: `internal/datasources/external_test.go`
 - Modify: `internal/provider/provider.go`
@@ -3343,8 +3371,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
 type externalDataSource struct {
@@ -3474,6 +3502,7 @@ git commit -S -m "feat(datasource): sops_external for in-string ciphertext"
 Mirror of `data "sops_file"` but using the framework's `ephemeral` package — plaintext never persists to state.
 
 **Files:**
+
 - Create: `internal/ephemeral/file.go`
 - Create: `internal/ephemeral/file_test.go`
 - Modify: `internal/provider/provider.go`
@@ -3495,7 +3524,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider"
 )
 
 var protoV6Factory = map[string]func() (tfprotov6.ProviderServer, error){
@@ -3572,8 +3601,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
 type ProviderDataAccessor interface {
@@ -3674,7 +3703,7 @@ Add ephemeral schema variants in each `auth/*.go` (mirroring `*BlockSchemaForDat
 In `provider.go`:
 
 ```go
-import "github.com/elioseverojunior/terraform-provider-sops/internal/ephemeral"
+import "github.com/elioetibr/terraform-provider-sops/internal/ephemeral"
 
 func (p *sopsProvider) EphemeralResources(_ context.Context) []func() ephemeral.EphemeralResource {
 	return []func() ephemeral.EphemeralResource{
@@ -3703,6 +3732,7 @@ plan/state. Requires Terraform >= 1.10."
 ### Task 19: `ephemeral "sops_external"` resource
 
 **Files:**
+
 - Create: `internal/ephemeral/external.go`
 - Create: `internal/ephemeral/external_test.go`
 - Modify: `internal/provider/provider.go`
@@ -3748,6 +3778,7 @@ git commit -S -m "feat(ephemeral): sops_external ephemeral resource"
 Real KMS round-trip — the headline integration test that proves the `AWS_PROFILE` injection works end-to-end. Gated on `TF_ACC=1` plus AWS env vars so it never runs in normal `go test`.
 
 **Files:**
+
 - Create: `internal/sopswrap/acc_aws_kms_test.go`
 
 - [ ] **Step 1: Write the gated test**
@@ -3768,8 +3799,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
-	"github.com/elioseverojunior/terraform-provider-sops/internal/sopswrap"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
 
 // TestAccAWSKMS_ProfileInjection verifies that setting AWSConfig.Profile is
@@ -3823,17 +3854,20 @@ func TestAccAWSKMS_ProfileInjection(t *testing.T) {
 
 Add to README (Task 22):
 
-```markdown
+````markdown
 ## Running cloud acceptance tests
 
 AWS KMS:
+
 ```bash
 export TF_ACC=1
 export SOPS_TEST_AWS_PROFILE=production-sre
 export SOPS_TEST_KMS_ARN=arn:aws:kms:us-east-1:123:key/abc
 go test -tags=acceptance ./internal/sopswrap/...
 ```
-```
+````
+
+````
 
 - [ ] **Step 3: Run — expect skip locally**
 
@@ -3849,7 +3883,7 @@ git commit -S -m "test(acceptance): real AWS KMS decrypt with injected profile
 Gated by build tag 'acceptance' and TF_ACC=1 + AWS env vars.
 Asserts that decryption succeeds without AWS_PROFILE in process env —
 the headline fix for carlpett #119 / #45 / #89."
-```
+````
 
 ---
 
@@ -3858,6 +3892,7 @@ the headline fix for carlpett #119 / #45 / #89."
 Compilable, real-Terraform examples that double as documentation. Each is verified by `terraform validate` in CI.
 
 **Files:**
+
 - Create: `examples/aws-kms-profile/main.tf`
 - Create: `examples/aws-cross-account/main.tf`
 - Create: `examples/age/main.tf`
@@ -3870,7 +3905,7 @@ terraform {
   required_version = ">= 1.10"
   required_providers {
     sops = {
-      source  = "elioseverojunior/sops"
+      source  = "elioetibr/sops"
       version = ">= 0.1.0"
     }
   }
@@ -3898,7 +3933,7 @@ output "db_password" {
 
 ```hcl
 terraform {
-  required_providers { sops = { source = "elioseverojunior/sops"; version = ">= 0.1.0" } }
+  required_providers { sops = { source = "elioetibr/sops"; version = ">= 0.1.0" } }
 }
 
 provider "sops" {
@@ -3924,7 +3959,7 @@ data "sops_file" "tenant_secrets" {
 
 ```hcl
 terraform {
-  required_providers { sops = { source = "elioseverojunior/sops"; version = ">= 0.1.0" } }
+  required_providers { sops = { source = "elioetibr/sops"; version = ">= 0.1.0" } }
 }
 
 provider "sops" {
@@ -3945,7 +3980,7 @@ output "structured" {
 
 ```hcl
 terraform {
-  required_providers { sops = { source = "elioseverojunior/sops"; version = ">= 0.1.0" } }
+  required_providers { sops = { source = "elioetibr/sops"; version = ">= 0.1.0" } }
 }
 
 provider "sops" {
@@ -3972,6 +4007,7 @@ data "sops_file" "dev" {
 - [ ] **Step 5: Verify they all `terraform validate`**
 
 Run (in each example dir):
+
 ```bash
 cd examples/aws-kms-profile && terraform init -backend=false && terraform validate
 ```
@@ -3997,13 +4033,14 @@ git commit -S -m "docs(examples): four real-world configurations
 ### Task 22: README rewrite + migration guide
 
 **Files:**
+
 - Modify: `README.md`
 
 - [ ] **Step 1: Replace README content**
 
 Replace `README.md` with:
 
-```markdown
+````markdown
 # terraform-provider-sops
 
 A Terraform provider for [SOPS](https://getsops.io/) — encrypt and decrypt files at plan time without exporting `AWS_PROFILE=…` to your shell.
@@ -4024,7 +4061,7 @@ A Terraform provider for [SOPS](https://getsops.io/) — encrypt and decrypt fil
 terraform {
   required_providers {
     sops = {
-      source  = "elioseverojunior/sops"
+      source  = "elioetibr/sops"
       version = ">= 0.1.0"
     }
   }
@@ -4043,6 +4080,7 @@ output "password" {
   sensitive = true
 }
 ```
+````
 
 ## Migrating from `carlpett/sops`
 
@@ -4053,7 +4091,7 @@ The data source attributes (`source_file`, `input_type`, `data`, `raw`) match 1:
    required_providers {
      sops = {
 -      source = "carlpett/sops"
-+      source = "elioseverojunior/sops"
++      source = "elioetibr/sops"
      }
    }
  }
@@ -4083,20 +4121,22 @@ See `docs/superpowers/specs/2026-05-14-terraform-sops-provider-design.md` for th
 ## License
 
 MIT.
-```
+
+````
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add README.md
 git commit -S -m "docs: rewrite README with migration guide from carlpett/sops"
-```
+````
 
 ---
 
 ### Task 23: GitHub Actions CI workflow
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 - Create: `.github/workflows/acceptance.yml`
 
@@ -4173,7 +4213,7 @@ on:
         default: "aws"
 
 permissions:
-  id-token: write   # for AWS OIDC role
+  id-token: write # for AWS OIDC role
   contents: read
 
 jobs:
@@ -4216,6 +4256,7 @@ account to run the headline KMS profile-injection test."
 Prepares for a Terraform Registry release. Not actually run in Phase 1 (we'll release manually after a tag), but the config lives in-tree.
 
 **Files:**
+
 - Create: `.goreleaser.yml`
 
 - [ ] **Step 1: Write `.goreleaser.yml`**
@@ -4231,28 +4272,28 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
-    mod_timestamp: '{{ .CommitTimestamp }}'
+    mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -trimpath
     ldflags:
       - "-s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }}"
     goos: [linux, darwin, windows, freebsd]
-    goarch: [amd64, arm64, '386', arm]
+    goarch: [amd64, arm64, "386", arm]
     ignore:
-      - { goos: darwin, goarch: '386' }
+      - { goos: darwin, goarch: "386" }
       - { goos: darwin, goarch: arm }
       - { goos: windows, goarch: arm64 }
       - { goos: windows, goarch: arm }
       - { goos: freebsd, goarch: arm64 }
-    binary: '{{ .ProjectName }}_v{{ .Version }}'
+    binary: "{{ .ProjectName }}_v{{ .Version }}"
 archives:
   - format: zip
-    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 checksum:
   extra_files:
-    - glob: 'terraform-registry-manifest.json'
-      name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
-  name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
+    - glob: "terraform-registry-manifest.json"
+      name_template: "{{ .ProjectName }}_{{ .Version }}_manifest.json"
+  name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
 signs:
   - artifacts: checksum
@@ -4266,8 +4307,8 @@ signs:
       - "${artifact}"
 release:
   extra_files:
-    - glob: 'terraform-registry-manifest.json'
-      name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
+    - glob: "terraform-registry-manifest.json"
+      name_template: "{{ .ProjectName }}_{{ .Version }}_manifest.json"
 changelog:
   use: github
   sort: asc
@@ -4310,23 +4351,27 @@ linux/darwin/windows/freebsd × amd64/arm64. GPG-signs checksums."
 - [ ] **Step 1: Run the full local test suite**
 
 Run:
+
 ```bash
 go mod tidy
 go vet ./...
 go test -race -count=1 ./...
 golangci-lint run
 ```
+
 Expected: all green.
 
 - [ ] **Step 2: Smoke-test locally against an age fixture**
 
 Run:
+
 ```bash
 make install VERSION=0.1.0-rc1
 cd examples/age
 terraform init
 terraform plan
 ```
+
 Expected: plan completes; no errors. Output is `(known after apply)` for the sensitive output (good — sensitivity is honored).
 
 - [ ] **Step 3: Tag and push**
@@ -4350,32 +4395,33 @@ Mark this plan as complete; open Phase 2 plan from spec §14.
 
 **Spec coverage check:**
 
-| Spec section | Plan coverage |
-|---|---|
-| §2 first-class credential config | Tasks 4–8 (auth blocks), 15 (provider Configure) |
-| §3 architecture (bypass decrypt.Data, build MasterKey directly) | Task 13 |
-| §4 plugin-framework SDK | Task 1 |
-| §5.1 provider block schema | Task 15 |
-| §5.2 alias support | Free with framework; example in Task 21 multi-alias |
-| §5.3 per-resource auth overrides | Tasks 16, 17, 18, 19 |
-| §6.1 `data sops_file` (carlpett-compatible + data_json + metadata) | Task 16 |
-| §6.2 `data sops_external` | Task 17 |
-| §6.3 ephemeral variants | Tasks 18, 19 |
-| §6.4 `resource sops_file` | **Deferred to Phase 2** (out of scope per §14) |
-| §6.5 provider functions | **Deferred to Phase 3** |
-| §7 decryption data flow | Task 14 (decrypt orchestrator) |
-| §8 concurrency model | Task 11 (semaphore) |
-| §9 caching | **Deferred to Phase 3** |
-| §10 error model | Tasks 14, 16 (diagnostics with actionable hints) |
-| §11 testing strategy | Tasks 2–14 (unit), 16/17/18/19 (acceptance-style), 20 (real KMS) |
-| §12 repo layout | Tasks 1, 16, 18 |
-| §13 release & versioning | Task 24 (goreleaser); release happens after Task 25 |
+| Spec section                                                       | Plan coverage                                                    |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| §2 first-class credential config                                   | Tasks 4–8 (auth blocks), 15 (provider Configure)                 |
+| §3 architecture (bypass decrypt.Data, build MasterKey directly)    | Task 13                                                          |
+| §4 plugin-framework SDK                                            | Task 1                                                           |
+| §5.1 provider block schema                                         | Task 15                                                          |
+| §5.2 alias support                                                 | Free with framework; example in Task 21 multi-alias              |
+| §5.3 per-resource auth overrides                                   | Tasks 16, 17, 18, 19                                             |
+| §6.1 `data sops_file` (carlpett-compatible + data_json + metadata) | Task 16                                                          |
+| §6.2 `data sops_external`                                          | Task 17                                                          |
+| §6.3 ephemeral variants                                            | Tasks 18, 19                                                     |
+| §6.4 `resource sops_file`                                          | **Deferred to Phase 2** (out of scope per §14)                   |
+| §6.5 provider functions                                            | **Deferred to Phase 3**                                          |
+| §7 decryption data flow                                            | Task 14 (decrypt orchestrator)                                   |
+| §8 concurrency model                                               | Task 11 (semaphore)                                              |
+| §9 caching                                                         | **Deferred to Phase 3**                                          |
+| §10 error model                                                    | Tasks 14, 16 (diagnostics with actionable hints)                 |
+| §11 testing strategy                                               | Tasks 2–14 (unit), 16/17/18/19 (acceptance-style), 20 (real KMS) |
+| §12 repo layout                                                    | Tasks 1, 16, 18                                                  |
+| §13 release & versioning                                           | Task 24 (goreleaser); release happens after Task 25              |
 
 All Phase 1 spec sections have at least one task. Phase 2 and 3 items are intentionally deferred per §14 phasing.
 
 **Placeholder scan:** No "TBD" / "TODO: implement later" / "add appropriate validation" / unspecified test bodies. Every code step shows the actual code.
 
 **Type consistency check:**
+
 - `auth.Config` (Task 2) is consumed by every later component — name and shape stable.
 - `sopswrap.Decrypt` (Task 14) input/output shapes match what `internal/datasources/file.go` (Task 16) and `internal/ephemeral/file.go` (Task 18) call into.
 - `ProviderData` and `ProviderDataAccessor` interface (Tasks 15, 16, 18) — same method name `ProviderAuthConfig` used everywhere.

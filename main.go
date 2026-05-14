@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider"
 )
 
 var version = "dev"
@@ -18,7 +18,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/elioseverojunior/sops",
+		Address: "registry.terraform.io/elioetibr/sops",
 		Debug:   debug,
 	}
 

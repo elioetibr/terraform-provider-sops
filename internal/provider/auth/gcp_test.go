@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 func TestGCPModelToConfig_AllFields(t *testing.T) {

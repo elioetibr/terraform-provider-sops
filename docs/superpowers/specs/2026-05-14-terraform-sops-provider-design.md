@@ -1,4 +1,4 @@
-# terraform-provider-sops (elioseverojunior/sops) — Design Spec
+# terraform-provider-sops (elioetibr/sops) — Design Spec
 
 **Date:** 2026-05-14
 **Author:** Elio S. Jr.
@@ -90,7 +90,7 @@ Conforms to the [official `provider` block reference](https://developer.hashicor
 terraform {
   required_providers {
     sops = {
-      source  = "elioseverojunior/sops"
+      source  = "elioetibr/sops"
       version = ">= 0.1.0"
     }
   }
@@ -220,15 +220,15 @@ output "nested"    { value = jsondecode(data.sops_file.secrets.data_json) }   # 
 output "metadata"  { value = data.sops_file.secrets.metadata  }   # NEW — lastmodified, mac, version, kms_arns
 ```
 
-| attribute | type | notes |
-|---|---|---|
-| `source_file` | string (required) | path to encrypted file |
-| `input_type` | string (optional) | one of yaml/json/dotenv/ini/binary/raw; auto-detected from extension if omitted |
-| `data` | map(string) | **flat** key/value (carlpett-compatible). Nested keys joined with `.` |
-| `data_json` | string | **NEW.** Structured JSON of the decrypted tree |
-| `raw` | string | decrypted file bytes |
-| `metadata` | object | `{ lastmodified, mac, version, key_groups, kms_arns, gcp_kms, azure_kv, age_recipients, pgp_fingerprints }` |
-| `ignore_mac` | bool (optional, default false) | with deprecation-style warning on every plan when true |
+| attribute     | type                           | notes                                                                                                       |
+| ------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `source_file` | string (required)              | path to encrypted file                                                                                      |
+| `input_type`  | string (optional)              | one of yaml/json/dotenv/ini/binary/raw; auto-detected from extension if omitted                             |
+| `data`        | map(string)                    | **flat** key/value (carlpett-compatible). Nested keys joined with `.`                                       |
+| `data_json`   | string                         | **NEW.** Structured JSON of the decrypted tree                                                              |
+| `raw`         | string                         | decrypted file bytes                                                                                        |
+| `metadata`    | object                         | `{ lastmodified, mac, version, key_groups, kms_arns, gcp_kms, azure_kv, age_recipients, pgp_fingerprints }` |
+| `ignore_mac`  | bool (optional, default false) | with deprecation-style warning on every plan when true                                                      |
 
 ### 6.2 `data "sops_external"` (carlpett-compatible)
 
@@ -265,15 +265,15 @@ resource "sops_file" "secrets" {
 }
 ```
 
-| concern | behavior |
-|---|---|
-| `Create` | encrypt `content_wo` to `path`. |
-| `Read` | decrypt `path`, hash plaintext + capture metadata. **Drift** = file MAC differs OR metadata changed out-of-band. |
-| `Update` | re-encrypt only if `content_wo_version` advanced OR `creation_rules.*` changed. |
-| `Delete` | optional `lifecycle.prevent_destroy_file = true` to keep the file on disk after the resource is destroyed (audit safety). |
-| `rotate_keys = true` | explicit flag triggers `sops updatekeys`-equivalent without re-encrypting plaintext. |
-| Plaintext leakage | `content_wo` is a **write-only attribute** (framework feature). Never serialized to plan or state. The only stored derivative is a sha256 hash. |
-| MAC | always recomputed on encrypt; verified on decrypt; failure is an error unless `ignore_mac = true`. |
+| concern              | behavior                                                                                                                                        |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Create`             | encrypt `content_wo` to `path`.                                                                                                                 |
+| `Read`               | decrypt `path`, hash plaintext + capture metadata. **Drift** = file MAC differs OR metadata changed out-of-band.                                |
+| `Update`             | re-encrypt only if `content_wo_version` advanced OR `creation_rules.*` changed.                                                                 |
+| `Delete`             | optional `lifecycle.prevent_destroy_file = true` to keep the file on disk after the resource is destroyed (audit safety).                       |
+| `rotate_keys = true` | explicit flag triggers `sops updatekeys`-equivalent without re-encrypting plaintext.                                                            |
+| Plaintext leakage    | `content_wo` is a **write-only attribute** (framework feature). Never serialized to plan or state. The only stored derivative is a sha256 hash. |
+| MAC                  | always recomputed on encrypt; verified on decrypt; failure is an error unless `ignore_mac = true`.                                              |
 
 ### 6.5 Provider functions (TF ≥1.8 — zero state leakage)
 
@@ -354,13 +354,13 @@ sopswrap.Decrypt(ctx, "s.yaml", mergedOpts)
 
 Distinct Go error types surfaced as Terraform diagnostics with summaries + actionable details:
 
-| error | detail surfaced |
-|---|---|
-| `ErrAuth` | "AWS KMS access denied for `arn:aws:kms:...` — check `provider \"sops\" { aws { profile = ... } }` or per-resource `aws { ... }` block" |
-| `ErrKeyService` | "remote keyservice at `unix:///tmp/sops.sock` unreachable — set `keyservice.enable_local = true` to fall back" |
-| `ErrMAC` | "MAC mismatch on `secrets.yaml` — file may have been tampered with. Set `ignore_mac = true` only as a last resort" |
-| `ErrFormat` | "could not parse `secrets.yaml` as `yaml` — try `input_type = \"binary\"` or check extension/contents" |
-| `ErrPartialDecrypt` | "1 of 2 key groups failed; threshold met. Failing keys: …" — only fatal if threshold unmet |
+| error               | detail surfaced                                                                                                                         |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `ErrAuth`           | "AWS KMS access denied for `arn:aws:kms:...` — check `provider \"sops\" { aws { profile = ... } }` or per-resource `aws { ... }` block" |
+| `ErrKeyService`     | "remote keyservice at `unix:///tmp/sops.sock` unreachable — set `keyservice.enable_local = true` to fall back"                          |
+| `ErrMAC`            | "MAC mismatch on `secrets.yaml` — file may have been tampered with. Set `ignore_mac = true` only as a last resort"                      |
+| `ErrFormat`         | "could not parse `secrets.yaml` as `yaml` — try `input_type = \"binary\"` or check extension/contents"                                  |
+| `ErrPartialDecrypt` | "1 of 2 key groups failed; threshold met. Failing keys: …" — only fatal if threshold unmet                                              |
 
 All errors **never** include plaintext fragments.
 
@@ -383,7 +383,7 @@ All errors **never** include plaintext fragments.
 ```
 terraform-provider-sops/
 ├── main.go
-├── go.mod                                      # github.com/elioseverojunior/terraform-provider-sops
+├── go.mod                                      # github.com/elioetibr/terraform-provider-sops
 ├── internal/
 │   ├── provider/
 │   │   ├── provider.go                         # New(), Schema, Configure
@@ -442,7 +442,7 @@ terraform-provider-sops/
 - **v0.3.0** — Phase 3 (functions, structured caching, key rotation, vault).
 - **v1.0.0** — when external users have run against v0.x for ≥3 months with no breaking schema feedback.
 
-Registry: `registry.terraform.io/elioseverojunior/sops`. Build + sign via `goreleaser`; provider signing key per [HashiCorp publishing docs](https://developer.hashicorp.com/terraform/registry/providers/publishing). MIT licensed (matches existing LICENSE in repo).
+Registry: `registry.terraform.io/elioetibr/sops`. Build + sign via `goreleaser`; provider signing key per [HashiCorp publishing docs](https://developer.hashicorp.com/terraform/registry/providers/publishing). MIT licensed (matches existing LICENSE in repo).
 
 ## 14. Phasing
 
@@ -478,14 +478,14 @@ Registry: `registry.terraform.io/elioseverojunior/sops`. Build + sign via `gorel
 
 ## 15. Risks & mitigations
 
-| risk | mitigation |
-|---|---|
-| SOPS lower-level API changes between minor versions | Pin `getsops/sops/v3` to a single minor in go.mod; integration-test on each bump. |
-| Plaintext leaks via diagnostics or logs | Centralize all error formatting in one package; unit-test that no plaintext flows through; redact `data`/`raw` from any debug logging by default. |
+| risk                                                                     | mitigation                                                                                                                                                        |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SOPS lower-level API changes between minor versions                      | Pin `getsops/sops/v3` to a single minor in go.mod; integration-test on each bump.                                                                                 |
+| Plaintext leaks via diagnostics or logs                                  | Centralize all error formatting in one package; unit-test that no plaintext flows through; redact `data`/`raw` from any debug logging by default.                 |
 | `content_wo` write-only attributes are still relatively new in framework | Acceptance-test against the lowest-supported TF version (1.11) on each release; document a fallback pattern using ephemeral + `local_file` for users on older TF. |
-| Concurrency semaphore could become a bottleneck on giant Terraform plans | Default 4, configurable up to 64; document tuning. |
-| Cross-account assume-role token expiry mid-plan | Refresh credentials on every Decrypt call (no global session memoization for cross-account paths). |
-| Cache hits returning stale plaintext after file edited out-of-band | Cache key includes mtime + size; TTL bounds the worst case; cache is opt-out. |
+| Concurrency semaphore could become a bottleneck on giant Terraform plans | Default 4, configurable up to 64; document tuning.                                                                                                                |
+| Cross-account assume-role token expiry mid-plan                          | Refresh credentials on every Decrypt call (no global session memoization for cross-account paths).                                                                |
+| Cache hits returning stale plaintext after file edited out-of-band       | Cache key includes mtime + size; TTL bounds the worst case; cache is opt-out.                                                                                     |
 
 ## 16. Open questions (none blocking)
 

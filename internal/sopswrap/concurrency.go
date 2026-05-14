@@ -25,7 +25,7 @@ func NewSemaphore(limit int) *Semaphore {
 	return &Semaphore{w: semaphore.NewWeighted(int64(limit))}
 }
 
-// Acquire blocks until a slot is free or ctx is cancelled.
+// Acquire blocks until a slot is free or ctx is canceled.
 // Returns a release function. Callers should `defer release()`.
 func (s *Semaphore) Acquire(ctx context.Context) (release func(), err error) {
 	if err := s.w.Acquire(ctx, 1); err != nil {

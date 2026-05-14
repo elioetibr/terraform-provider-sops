@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/elioseverojunior/terraform-provider-sops/internal/provider/auth"
+	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
 func TestConfigZeroValue(t *testing.T) {
