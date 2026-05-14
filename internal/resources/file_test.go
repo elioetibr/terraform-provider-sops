@@ -3,6 +3,7 @@ package resources_test
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -147,3 +148,75 @@ resource "sops_file" "test" {
 		},
 	})
 }
+
+// TestAccResource_SopsFile_DriftAfterTamper verifies that when the encrypted
+// file is overwritten out-of-band with a different plaintext, Terraform detects
+// drift via the changed plaintext_sha256 and produces a non-empty plan.
+//
+// Requires Terraform >= 1.11 for write-only attribute support.
+// The test is automatically skipped on older Terraform versions.
+func TestAccResource_SopsFile_DriftAfterTamper(t *testing.T) {
+	root := repoRoot(t)
+	keyFile := filepath.Join(root, "testdata/age-key.txt")
+	pubKey := agePublicKey(t)
+
+	t.Setenv("SOPS_AGE_KEY_FILE", keyFile)
+
+	tmpDir := t.TempDir()
+	target := filepath.Join(tmpDir, "secrets.yaml")
+
+	tfConfig := `
+resource "sops_file" "x" {
+  path               = "` + target + `"
+  content_wo         = "password: hunter2\n"
+  content_wo_version = "1"
+  input_type         = "yaml"
+
+  creation_rules {
+    age_recipients = ["` + pubKey + `"]
+  }
+}
+`
+
+	resource.Test(t, resource.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_11_0),
+		},
+		ProtoV6ProviderFactories: protoV6Factory,
+		Steps: []resource.TestStep{
+			{
+				Config: tfConfig,
+				Check:  resource.TestCheckResourceAttrSet("sops_file.x", "plaintext_sha256"),
+			},
+			{
+				PreConfig: func() {
+					// Write a different plaintext and re-encrypt using the sops CLI.
+					plainFile := target + ".plain"
+					if err := os.WriteFile(plainFile, []byte("password: tampered\n"), 0o600); err != nil {
+						t.Fatalf("tamper write: %v", err)
+					}
+					// Tell the sops CLI which age recipient to encrypt to.
+					t.Setenv("SOPS_AGE_RECIPIENTS", pubKey)
+					if err := execSops(t, plainFile, target); err != nil {
+						t.Fatalf("tamper re-encrypt: %v", err)
+					}
+				},
+				Config:             tfConfig,
+				ExpectNonEmptyPlan: true, // drift detected via differing plaintext_sha256
+			},
+		},
+	})
+}
+
+// execSops encrypts the file at in using the sops CLI and writes the result to out.
+// SOPS_AGE_KEY_FILE and SOPS_AGE_RECIPIENTS must already be set in the environment.
+func execSops(t *testing.T, in, out string) error {
+	t.Helper()
+	cmd := exec.Command("sops", "--encrypt", "--input-type", "yaml", "--output-type", "yaml", in)
+	b, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(out, b, 0o600)
+}
+
