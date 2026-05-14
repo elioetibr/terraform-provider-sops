@@ -46,31 +46,31 @@ This provider rewrites the surface with a single goal: **production-grade SOPS i
 ┌─────────────────────────────────────────────────────────────────┐
 │                  terraform-provider-sops                        │
 │                                                                 │
-│  ┌─────────────────┐    ┌─────────────────────────────────┐    │
-│  │ provider block  │    │   data / ephemeral / resource / │    │
-│  │  + alias        │───▶│   function entry points         │    │
-│  │  + auth blocks  │    └──────────────┬──────────────────┘    │
-│  └─────────────────┘                   │                       │
-│                                        ▼                       │
-│                    ┌────────────────────────────────────┐      │
-│                    │   internal/provider/auth (merge)   │      │
-│                    │   provider-level + per-call  ⇒ Cfg │      │
-│                    └────────────────┬───────────────────┘      │
-│                                     ▼                          │
-│                    ┌────────────────────────────────────┐      │
-│                    │   internal/sopswrap                │      │
-│                    │   - load file → sops.Tree (Store)  │      │
-│                    │   - build MasterKeys w/ injected   │      │
-│                    │     creds (kms/gcp/azkv/age/pgp/   │      │
-│                    │     vault) — bypass decrypt.Data   │      │
-│                    │   - Decrypt / Encrypt              │      │
-│                    │   - concurrency mutex + LRU cache  │      │
-│                    └────────────────┬───────────────────┘      │
-│                                     ▼                          │
-│                    ┌────────────────────────────────────┐      │
-│                    │   github.com/getsops/sops/v3       │      │
-│                    │   (Tree, Stores, MasterKey, KS)    │      │
-│                    └────────────────────────────────────┘      │
+│  ┌─────────────────┐    ┌─────────────────────────────────┐     │
+│  │ provider block  │    │   data / ephemeral / resource / │     │
+│  │  + alias        │───▶│   function entry points         │     │
+│  │  + auth blocks  │    └──────────────┬──────────────────┘     │
+│  └─────────────────┘                   │                        │
+│                                        ▼                        │
+│                    ┌────────────────────────────────────┐       │
+│                    │   internal/provider/auth (merge)   │       │
+│                    │   provider-level + per-call  ⇒ Cfg │       │
+│                    └────────────────┬───────────────────┘       │
+│                                     ▼                           │
+│                    ┌────────────────────────────────────┐       │
+│                    │   internal/sopswrap                │       │
+│                    │   - load file → sops.Tree (Store)  │       │
+│                    │   - build MasterKeys w/ injected   │       │
+│                    │     creds (kms/gcp/azkv/age/pgp/   │       │
+│                    │     vault) — bypass decrypt.Data   │       │
+│                    │   - Decrypt / Encrypt              │       │
+│                    │   - concurrency mutex + LRU cache  │       │
+│                    └────────────────┬───────────────────┘       │
+│                                     ▼                           │
+│                    ┌────────────────────────────────────┐       │
+│                    │   github.com/getsops/sops/v3       │       │
+│                    │   (Tree, Stores, MasterKey, KS)    │       │
+│                    └────────────────────────────────────┘       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
