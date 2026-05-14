@@ -111,6 +111,7 @@ func (p *sopsProvider) DataSources(_ context.Context) []func() datasource.DataSo
 func (p *sopsProvider) EphemeralResources(_ context.Context) []func() ephemeral.EphemeralResource {
 	return []func() ephemeral.EphemeralResource{
 		sopsephemeral.NewFileEphemeral,
+		sopsephemeral.NewExternalEphemeral,
 	}
 }
 func (p *sopsProvider) Resources(_ context.Context) []func() resource.Resource {
