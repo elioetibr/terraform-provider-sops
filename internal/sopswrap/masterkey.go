@@ -43,13 +43,16 @@ func RebuildKeyGroups(tree sops.Tree, cfg auth.Config) ([]sops.KeyGroup, error) 
 func rebuildOne(mk keys.MasterKey, cfg auth.Config) (keys.MasterKey, error) {
 	switch k := mk.(type) {
 	case *kms.MasterKey:
-		out := kms.NewMasterKeyFromArn(k.Arn, k.EncryptionContext, k.Role)
+		// Determine the effective role: embedded role from the SOPS file is the
+		// source of truth; only fall back to the provider-configured assume_role
+		// when the file has no embedded role.
+		role := k.Role
+		if role == "" && cfg.AWS.AssumeRole != nil {
+			role = cfg.AWS.AssumeRole.RoleARN
+		}
+		out := kms.NewMasterKeyWithProfile(k.Arn, role, k.EncryptionContext, cfg.AWS.Profile)
 		out.EncryptedKey = k.EncryptedKey
 		out.CreationDate = k.CreationDate
-		out.AwsProfile = cfg.AWS.Profile
-		if cfg.AWS.AssumeRole != nil && out.Role == "" {
-			out.Role = cfg.AWS.AssumeRole.RoleARN
-		}
 		return out, nil
 
 	case *gcpkms.MasterKey:
