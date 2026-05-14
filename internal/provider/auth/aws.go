@@ -8,6 +8,8 @@ import (
 	fwpath "github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 )
 
 // AWSModel is the terraform-plugin-framework data model for the `aws { ... }` block.
@@ -49,6 +51,31 @@ func AWSBlockSchema() schema.Block {
 					"session_name": schema.StringAttribute{Optional: true},
 					"external_id":  schema.StringAttribute{Optional: true},
 					"duration":     schema.StringAttribute{Optional: true},
+				},
+			},
+		},
+	}
+}
+
+// AWSBlockSchemaForDataSource returns the datasource/schema Block for the `aws` nested block.
+// Mirrors AWSBlockSchema() but uses the datasource/schema type hierarchy.
+func AWSBlockSchemaForDataSource() dsschema.Block {
+	return dsschema.SingleNestedBlock{
+		Description: "Per-resource AWS KMS credential override.",
+		Attributes: map[string]dsschema.Attribute{
+			"profile":                  dsschema.StringAttribute{Optional: true},
+			"region":                   dsschema.StringAttribute{Optional: true},
+			"shared_config_files":      dsschema.ListAttribute{Optional: true, ElementType: types.StringType},
+			"shared_credentials_files": dsschema.ListAttribute{Optional: true, ElementType: types.StringType},
+			"env":                      dsschema.MapAttribute{Optional: true, ElementType: types.StringType},
+		},
+		Blocks: map[string]dsschema.Block{
+			"assume_role": dsschema.SingleNestedBlock{
+				Attributes: map[string]dsschema.Attribute{
+					"role_arn":     dsschema.StringAttribute{Optional: true},
+					"session_name": dsschema.StringAttribute{Optional: true},
+					"external_id":  dsschema.StringAttribute{Optional: true},
+					"duration":     dsschema.StringAttribute{Optional: true},
 				},
 			},
 		},

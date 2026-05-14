@@ -6,6 +6,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 )
 
 // GCPModel is the terraform-plugin-framework data model for the `gcp { ... }` block.
@@ -25,6 +27,20 @@ func GCPBlockSchema() schema.Block {
 			"credentials_file":            schema.StringAttribute{Optional: true},
 			"impersonate_service_account": schema.StringAttribute{Optional: true},
 			"quota_project":               schema.StringAttribute{Optional: true},
+		},
+	}
+}
+
+// GCPBlockSchemaForDataSource returns the datasource/schema Block for the `gcp` nested block.
+// Mirrors GCPBlockSchema() but uses the datasource/schema type hierarchy.
+func GCPBlockSchemaForDataSource() dsschema.Block {
+	return dsschema.SingleNestedBlock{
+		Description: "Per-resource GCP KMS credential override.",
+		Attributes: map[string]dsschema.Attribute{
+			"credentials":                 dsschema.StringAttribute{Optional: true, Sensitive: true},
+			"credentials_file":            dsschema.StringAttribute{Optional: true},
+			"impersonate_service_account": dsschema.StringAttribute{Optional: true},
+			"quota_project":               dsschema.StringAttribute{Optional: true},
 		},
 	}
 }

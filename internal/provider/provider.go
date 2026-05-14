@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 
+	"github.com/elioetibr/terraform-provider-sops/internal/datasources"
 	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 	"github.com/elioetibr/terraform-provider-sops/internal/sopswrap"
 )
@@ -101,7 +102,9 @@ func appendDiagsHasErr(out *diag.Diagnostics, in diag.Diagnostics) bool {
 }
 
 func (p *sopsProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		datasources.NewFileDataSource,
+	}
 }
 func (p *sopsProvider) EphemeralResources(_ context.Context) []func() ephemeral.EphemeralResource {
 	return nil
