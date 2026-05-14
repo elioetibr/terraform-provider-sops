@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -16,5 +15,4 @@ func TestProviderBuilds(t *testing.T) {
 	require.NotNil(t, p, "provider must construct")
 	_, err := providerserver.NewProtocol6WithError(p)()
 	require.NoError(t, err)
-	_ = context.Background()
 }

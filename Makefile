@@ -1,8 +1,10 @@
 .PHONY: build test lint tidy install
 
-GO ?= go
+GO   ?= go
 BINARY = terraform-provider-sops
 VERSION ?= dev
+OS   ?= $(shell go env GOOS)
+ARCH ?= $(shell go env GOARCH)
 
 build:
 	$(GO) build -ldflags "-X main.version=$(VERSION)" -o $(BINARY)
@@ -20,5 +22,5 @@ tidy:
 	$(GO) mod tidy
 
 install: build
-	mkdir -p ~/.terraform.d/plugins/registry.terraform.io/elioseverojunior/sops/$(VERSION)/darwin_arm64
-	cp $(BINARY) ~/.terraform.d/plugins/registry.terraform.io/elioseverojunior/sops/$(VERSION)/darwin_arm64/
+	mkdir -p ~/.terraform.d/plugins/registry.terraform.io/elioseverojunior/sops/$(VERSION)/$(OS)_$(ARCH)
+	cp $(BINARY) ~/.terraform.d/plugins/registry.terraform.io/elioseverojunior/sops/$(VERSION)/$(OS)_$(ARCH)/
