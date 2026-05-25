@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -220,3 +221,73 @@ func execSops(t *testing.T, in, out string) error {
 	return os.WriteFile(out, b, 0o600)
 }
 
+// TestAccResource_SopsFile_RotateKeys verifies that setting rotate_keys = true
+// updates the encrypted master-key list without altering the plaintext content.
+// A data source reads back the decrypted value to confirm byte-identity.
+//
+// Requires Terraform >= 1.11 for write-only attribute support.
+// The test is automatically skipped on older Terraform versions.
+func TestAccResource_SopsFile_RotateKeys(t *testing.T) {
+	root := repoRoot(t)
+	keyFile := filepath.Join(root, "testdata/age-key.txt")
+	pubKey := agePublicKey(t)
+
+	t.Setenv("SOPS_AGE_KEY_FILE", keyFile)
+
+	// A second age recipient added during key rotation.
+	// This is a well-known test key — safe to hardcode in tests.
+	extraRecipient := "age14zq6sys37a63fgnmf76g4uge7rzdje3gw92gh0sndh7577dgvc8shk93k9"
+
+	tmpDir := t.TempDir()
+	target := filepath.Join(tmpDir, "secrets.yaml")
+
+	// tf generates the HCL for a given recipient list, rotate flag, and version token.
+	tf := func(recipients string, rotate string, version int) string {
+		return `
+resource "sops_file" "x" {
+  path               = "` + target + `"
+  content_wo         = "password: hunter2\n"
+  content_wo_version = "` + strconv.Itoa(version) + `"
+  input_type         = "yaml"
+  rotate_keys        = ` + rotate + `
+
+  creation_rules {
+    age_recipients = [` + recipients + `]
+  }
+}
+
+data "sops_file" "verify" {
+  source_file = sops_file.x.path
+  depends_on  = [sops_file.x]
+}
+
+output "pwd" { value = data.sops_file.verify.data["password"] }
+`
+	}
+
+	resource.Test(t, resource.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_11_0),
+		},
+		ProtoV6ProviderFactories: protoV6Factory,
+		Steps: []resource.TestStep{
+			{
+				// Step 1: Create with a single age recipient, rotate_keys off.
+				Config: tf(`"`+pubKey+`"`, "false", 1),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("sops_file.x", "plaintext_sha256"),
+					resource.TestCheckOutput("pwd", "hunter2"),
+				),
+			},
+			{
+				// Step 2: Add an extra recipient and rotate_keys = true.
+				// content_wo_version is intentionally NOT bumped — only key rotation occurs.
+				// The decrypted plaintext must still equal "hunter2".
+				Config: tf(`"`+pubKey+`", "`+extraRecipient+`"`, "true", 1),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("pwd", "hunter2"),
+				),
+			},
+		},
+	})
+}
