@@ -61,7 +61,7 @@ func TestExtractMetadata_KMSARNs(t *testing.T) {
 	t.Parallel()
 	tree := sops.Tree{
 		Metadata: sops.Metadata{
-			Version: "3.10.0",
+			Version:   "3.10.0",
 			KeyGroups: []sops.KeyGroup{
 				// We don't construct real MasterKeys here; ExtractMetadata accesses
 				// only fields the framework can serialize without crypto state.

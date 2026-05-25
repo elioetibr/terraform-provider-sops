@@ -55,7 +55,7 @@ type fileModel struct {
 	Azure            *auth.AzureModel         `tfsdk:"azure"`
 	Age              *auth.AgeModel           `tfsdk:"age"`
 	PGP              *auth.PGPModel           `tfsdk:"pgp"`
-	CreationRules    *auth.CreationRulesModel  `tfsdk:"creation_rules"`
+	CreationRules    *auth.CreationRulesModel `tfsdk:"creation_rules"`
 }
 
 func (r *fileResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
