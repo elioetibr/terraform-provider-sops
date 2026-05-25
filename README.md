@@ -11,6 +11,7 @@ A Terraform provider for [SOPS](https://getsops.io/) — encrypt and decrypt fil
 - Audit `metadata` attribute (lastmodified, MAC, KMS ARNs).
 - Concurrency-safe (fixes carlpett #126 — random failures with ≥7 parallel decrypts).
 - Ephemeral resources for zero-state-leakage decryption.
+- **Managed `sops_file` resource** for write-side encryption with drift detection and key rotation (Phase 2).
 
 ## Quick start
 
@@ -38,6 +39,36 @@ output "password" {
 }
 ```
 
+## Encrypting files (Phase 2)
+
+The `sops_file` resource encrypts plaintext to a SOPS file on disk. Plaintext is passed via the write-only `content_wo` attribute — it never lands in state. Bumping `content_wo_version` re-encrypts:
+
+```hcl
+resource "sops_file" "app" {
+  path               = "${path.module}/secrets.enc.yaml"
+  content_wo         = file("${path.module}/plaintext.yaml")
+  content_wo_version = "1"
+  input_type         = "yaml"
+
+  creation_rules {
+    age_recipients = ["age1qpf4q3wxc5m9eu3a7kp7z82l49yn94zd7r6c3qpf3v66h8x35y7sz4jqlf"]
+  }
+}
+```
+
+Out-of-band edits to the file are detected on `terraform plan` via a SHA-256 of the decrypted plaintext (`plaintext_sha256` in state).
+
+Rotate master keys without re-encrypting plaintext by adding/removing recipients (or KMS ARNs) and flipping `rotate_keys = true` for a single apply:
+
+```hcl
+  creation_rules {
+    age_recipients = ["age1...old", "age1...new"]
+  }
+  rotate_keys = true
+```
+
+> Requires Terraform **>= 1.11** (write-only attribute support).
+
 ## Migrating from `carlpett/sops`
 
 The data source attributes (`source_file`, `input_type`, `data`, `raw`) match 1:1. In most cases the migration is a one-line change to your `required_providers` block:
@@ -57,7 +88,7 @@ The data source attributes (`source_file`, `input_type`, `data`, `raw`) match 1:
 
 ## Examples
 
-See `examples/` for: AWS profile, cross-account, age, and multi-alias setups.
+See `examples/` for: AWS profile, cross-account, age, multi-alias, and `encrypt-resource` (managed `sops_file`) setups.
 
 ## Running the test suite
 
@@ -81,7 +112,7 @@ go test -tags=acceptance ./internal/sopswrap/...
 
 **Phase 1 (v0.1.x):** decrypt + per-call credential injection. Shipped.
 
-**Phase 2 (v0.2.x):** `sops_file` write resource + drift detection. Planned.
+**Phase 2 (v0.2.x):** `sops_file` write resource + drift detection + key rotation. Shipped.
 
 **Phase 3 (v0.3.x):** provider functions + LRU cache + Vault. Planned.
 
