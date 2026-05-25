@@ -14,16 +14,16 @@ import (
 func TestCreationRulesToConfig_AllFields(t *testing.T) {
 	t.Parallel()
 	m := &auth.CreationRulesModel{
-		KMSARNs:          listOf(t, "arn:aws:kms:us-east-1:1:key/abc"),
-		GCPKMSResources:  listOf(t, "projects/p/locations/global/keyRings/r/cryptoKeys/k"),
-		AzureKVKeys:      listOf(t, "https://kv.vault.azure.net/keys/k/v"),
-		AgeRecipients:    listOf(t, "age14zq6sys37a63fgnmf76g4uge7rzdje3gw92gh0sndh7577dgvc8shk93k9"),
-		PGPFingerprints:  listOf(t, "FBC7B9E2A4F9289AC0C1D4843D16CEE4A27381B4"),
-		EncryptedRegex:   types.StringValue("^(data|stringData)$"),
-		UnencryptedRegex: types.StringValue(""),
-		EncryptedSuffix:  types.StringValue(""),
+		KMSARNs:           listOf(t, "arn:aws:kms:us-east-1:1:key/abc"),
+		GCPKMSResources:   listOf(t, "projects/p/locations/global/keyRings/r/cryptoKeys/k"),
+		AzureKVKeys:       listOf(t, "https://kv.vault.azure.net/keys/k/v"),
+		AgeRecipients:     listOf(t, "age14zq6sys37a63fgnmf76g4uge7rzdje3gw92gh0sndh7577dgvc8shk93k9"),
+		PGPFingerprints:   listOf(t, "FBC7B9E2A4F9289AC0C1D4843D16CEE4A27381B4"),
+		EncryptedRegex:    types.StringValue("^(data|stringData)$"),
+		UnencryptedRegex:  types.StringValue(""),
+		EncryptedSuffix:   types.StringValue(""),
 		UnencryptedSuffix: types.StringValue("_unencrypted"),
-		Threshold:        types.Int64Value(2),
+		Threshold:         types.Int64Value(2),
 	}
 	cfg, diags := m.ToConfig(context.Background())
 	require.False(t, diags.HasError(), diags.Errors())
