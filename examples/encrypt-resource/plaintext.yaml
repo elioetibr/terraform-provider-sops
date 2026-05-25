@@ -1,0 +1,4 @@
+password: hunter2
+api_key: example-key-value
+nested:
+  token: nested-secret
