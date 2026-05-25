@@ -35,6 +35,20 @@ jobs:
       - run: go mod download
       - run: go vet ./...
       - run: go test -race -count=1 ./...
+
+  validate-examples:
+    runs-on: ubuntu-latest
+    # Pin to the highest supported Terraform: examples may declare a
+    # required_version (e.g. >= 1.11 for write-only attributes) that
+    # would fail under older versions in the test matrix.
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.11.*"
+          terraform_wrapper: false
       - name: Validate examples
         run: |
           for d in examples/*/; do
