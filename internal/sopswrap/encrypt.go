@@ -25,7 +25,11 @@ type EncryptInput struct {
 // EncryptResult is what Encrypt returns.
 type EncryptResult struct {
 	Ciphertext []byte
-	Metadata   Metadata
+	// CanonicalPlaintext is the parsed-then-emitted form of the plaintext.
+	// This matches what Decrypt would later produce, so a SHA-256 over it is
+	// stable across encrypt/decrypt round-trips (Stable drift fingerprint).
+	CanonicalPlaintext []byte
+	Metadata           Metadata
 }
 
 // Encrypt loads plaintext, constructs master keys with injected credentials,
@@ -48,6 +52,11 @@ func Encrypt(ctx context.Context, in EncryptInput) (*EncryptResult, error) {
 	branches, err := store.LoadPlainFile(in.Plaintext)
 	if err != nil {
 		return nil, fmt.Errorf("sopswrap: load plaintext: %w", err)
+	}
+
+	canonical, err := store.EmitPlainFile(branches)
+	if err != nil {
+		return nil, fmt.Errorf("sopswrap: emit canonical plaintext: %w", err)
 	}
 
 	groups, err := BuildMasterKeysFromRules(in.Rules, in.Config)
@@ -75,17 +84,37 @@ func Encrypt(ctx context.Context, in EncryptInput) (*EncryptResult, error) {
 		return nil, fmt.Errorf("sopswrap: generate data key: %w", errors.Join(errs...))
 	}
 
-	if _, err := tree.Encrypt(dataKey, aes.NewCipher()); err != nil {
-		return nil, fmt.Errorf("sopswrap: encrypt tree: %w", err)
-	}
-
-	out, err := store.EmitEncryptedFile(tree)
+	out, err := sealTree(&tree, dataKey, store)
 	if err != nil {
-		return nil, fmt.Errorf("sopswrap: emit ciphertext: %w", err)
+		return nil, err
 	}
 
 	return &EncryptResult{
-		Ciphertext: out,
-		Metadata:   ExtractMetadata(tree),
+		Ciphertext:         out,
+		CanonicalPlaintext: canonical,
+		Metadata:           ExtractMetadata(tree),
 	}, nil
+}
+
+// sealTree performs the three SOPS-internal seal operations: encrypt every
+// branch value with the data key, encrypt the resulting MAC, and emit the
+// ciphertext via the store. Extracted so the defensive error branches can be
+// unit-tested with crafted inputs (a bad-length dataKey rejects tree.Encrypt).
+func sealTree(tree *sops.Tree, dataKey []byte, store Store) ([]byte, error) {
+	cipher := aes.NewCipher()
+	mac, err := tree.Encrypt(dataKey, cipher)
+	if err != nil {
+		return nil, fmt.Errorf("sopswrap: encrypt tree: %w", err)
+	}
+	encryptedMAC, err := cipher.Encrypt(mac, dataKey, tree.Metadata.LastModified.Format(time.RFC3339))
+	if err != nil {
+		return nil, fmt.Errorf("sopswrap: encrypt mac: %w", err)
+	}
+	tree.Metadata.MessageAuthenticationCode = encryptedMAC
+
+	out, err := store.EmitEncryptedFile(*tree)
+	if err != nil {
+		return nil, fmt.Errorf("sopswrap: emit ciphertext: %w", err)
+	}
+	return out, nil
 }

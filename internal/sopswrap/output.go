@@ -120,9 +120,9 @@ func ExtractMetadata(tree sops.Tree) Metadata {
 	for _, group := range tree.Metadata.KeyGroups {
 		for _, k := range group {
 			typeName := strings.ToLower(fmt.Sprintf("%T", k))
+			// Order matters: "gcpkms.masterkey" must be checked before
+			// "kms.masterkey" because the latter is a substring of the former.
 			switch {
-			case strings.Contains(typeName, "kms.masterkey"):
-				meta.KMSARNs = append(meta.KMSARNs, k.ToString())
 			case strings.Contains(typeName, "gcpkms.masterkey"):
 				meta.GCPKMSResources = append(meta.GCPKMSResources, k.ToString())
 			case strings.Contains(typeName, "azkv.masterkey"):
@@ -131,6 +131,8 @@ func ExtractMetadata(tree sops.Tree) Metadata {
 				meta.AgeRecipients = append(meta.AgeRecipients, k.ToString())
 			case strings.Contains(typeName, "pgp.masterkey"):
 				meta.PGPFingerprints = append(meta.PGPFingerprints, k.ToString())
+			case strings.Contains(typeName, "kms.masterkey"):
+				meta.KMSARNs = append(meta.KMSARNs, k.ToString())
 			}
 		}
 	}

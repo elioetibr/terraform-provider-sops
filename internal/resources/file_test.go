@@ -261,7 +261,10 @@ data "sops_file" "verify" {
   depends_on  = [sops_file.x]
 }
 
-output "pwd" { value = data.sops_file.verify.data["password"] }
+output "pwd" {
+  value     = data.sops_file.verify.data["password"]
+  sensitive = true
+}
 `
 	}
 
