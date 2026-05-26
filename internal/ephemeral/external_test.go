@@ -20,15 +20,18 @@ func TestAccEphemeral_SopsExternal_YAML(t *testing.T) {
 	}
 	escaped := escapeHCLString(string(src))
 
+	// Ephemeral outputs are not allowed at the root module in TF 1.11+;
+	// we consume the ephemeral value via a check block instead.
 	tf := `
 ephemeral "sops_external" "x" {
   source     = "` + escaped + `"
   input_type = "yaml"
 }
-output "pwd" {
-  value     = ephemeral.sops_external.x.data["database.password"]
-  sensitive = true
-  ephemeral = true
+check "decrypted_password" {
+  assert {
+    condition     = ephemeral.sops_external.x.data["database.password"] != ""
+    error_message = "expected decrypted database.password to be non-empty"
+  }
 }
 `
 

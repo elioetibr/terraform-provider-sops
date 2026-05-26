@@ -29,15 +29,19 @@ func TestAccEphemeral_SopsFile_YAML(t *testing.T) {
 	t.Setenv("SOPS_AGE_KEY_FILE", filepath.Join(root, "testdata/age-key.txt"))
 
 	fixture := filepath.Join(root, "testdata/secrets.yaml")
+	// Ephemeral outputs are not allowed at the root module in TF 1.11+;
+	// we consume the ephemeral value via a check block instead, which is
+	// the canonical pattern for asserting on ephemeral data in tests.
 	tf := `
 ephemeral "sops_file" "x" {
   source_file = "` + fixture + `"
   input_type  = "yaml"
 }
-output "pwd" {
-  value     = ephemeral.sops_file.x.data["database.password"]
-  sensitive = true
-  ephemeral = true
+check "decrypted_password" {
+  assert {
+    condition     = ephemeral.sops_file.x.data["database.password"] != ""
+    error_message = "expected decrypted database.password to be non-empty"
+  }
 }
 `
 

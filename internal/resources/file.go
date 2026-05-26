@@ -35,8 +35,11 @@ func NewFileResource() resource.Resource {
 	return &fileResource{}
 }
 
-// Ensure fileResource implements resource.ResourceWithConfigure.
-var _ resource.ResourceWithConfigure = (*fileResource)(nil)
+// Ensure fileResource implements the framework interfaces it needs.
+var (
+	_ resource.ResourceWithConfigure  = (*fileResource)(nil)
+	_ resource.ResourceWithModifyPlan = (*fileResource)(nil)
+)
 
 // fileModel is the tfsdk state/plan model for sops_file.
 type fileModel struct {
@@ -203,7 +206,7 @@ func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	plan.ID = types.StringValue(destPath)
 	plan.InputType = types.StringValue(string(format))
-	plan.PlaintextSHA256 = types.StringValue(PlaintextDigest([]byte(contentWO.ValueString())))
+	plan.PlaintextSHA256 = types.StringValue(PlaintextDigest(result.CanonicalPlaintext))
 	plan.SopsMAC = types.StringValue(result.Metadata.MAC)
 	plan.SopsLastModified = types.StringValue(result.Metadata.LastModified.Format(time.RFC3339))
 	plan.Metadata = metadataObjectValue(ctx, result.Metadata)
@@ -254,8 +257,10 @@ func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	// Update drift-sensitive computed attributes.
-	state.PlaintextSHA256 = types.StringValue(PlaintextDigest(out.Plaintext))
+	// Audit fields refresh from the on-disk file. plaintext_sha256 deliberately
+	// is NOT updated here — it's a commitment fingerprint set at Create/Update
+	// time; ModifyPlan compares it against the file's current decrypted digest
+	// to surface drift. Updating it here would silently absorb the drift.
 	state.SopsMAC = types.StringValue(out.Metadata.MAC)
 	state.SopsLastModified = types.StringValue(out.Metadata.LastModified.Format(time.RFC3339))
 	state.Metadata = metadataObjectValue(ctx, out.Metadata)
@@ -421,7 +426,7 @@ func (r *fileResource) doReEncrypt(
 
 	plan.ID = types.StringValue(destPath)
 	plan.InputType = types.StringValue(string(format))
-	plan.PlaintextSHA256 = types.StringValue(PlaintextDigest([]byte(contentWO.ValueString())))
+	plan.PlaintextSHA256 = types.StringValue(PlaintextDigest(result.CanonicalPlaintext))
 	plan.SopsMAC = types.StringValue(result.Metadata.MAC)
 	plan.SopsLastModified = types.StringValue(result.Metadata.LastModified.Format(time.RFC3339))
 	plan.Metadata = metadataObjectValue(ctx, result.Metadata)
@@ -429,6 +434,54 @@ func (r *fileResource) doReEncrypt(
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 	return nil
+}
+
+// ModifyPlan surfaces out-of-band drift. When the file on disk decrypts to a
+// plaintext whose SHA-256 differs from state.plaintext_sha256, computed
+// attributes are marked unknown so the plan shows a diff. Drift only
+// auto-remediates when the user bumps content_wo_version or sets
+// rotate_keys = true; otherwise the diff persists, signalling tamper.
+func (r *fileResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return // create or destroy
+	}
+
+	var state, plan fileModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	destPath := state.Path.ValueString()
+	ciphertext, err := os.ReadFile(destPath)
+	if err != nil {
+		return // Read will handle missing file
+	}
+
+	format := resolveFormat(state.InputType.ValueString(), destPath)
+	perCall := buildPerCallConfig(ctx, plan.AWS, plan.GCP, plan.Azure, plan.Age, plan.PGP, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	cfg := auth.Merge(r.providerCfg, perCall)
+
+	out, err := sopswrap.Decrypt(ctx, sopswrap.DecryptInput{
+		Source: ciphertext, Format: format, Config: cfg,
+	})
+	if err != nil {
+		return // can't decrypt — leave plan alone, Read will surface the error
+	}
+
+	if state.PlaintextSHA256.ValueString() == PlaintextDigest(out.Plaintext) {
+		return // no drift
+	}
+
+	plan.PlaintextSHA256 = types.StringUnknown()
+	plan.SopsMAC = types.StringUnknown()
+	plan.SopsLastModified = types.StringUnknown()
+	plan.Metadata = types.ObjectUnknown(metadataAttrTypes())
+	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 }
 
 // Delete implements resource.Resource.

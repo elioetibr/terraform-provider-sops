@@ -34,7 +34,12 @@ jobs:
           sudo apt-get update && sudo apt-get install -y age
       - run: go mod download
       - run: go vet ./...
-      - run: go test -race -count=1 ./...
+      - name: go test (with acceptance tests)
+        env:
+          TF_ACC: "1"
+        run: go test -race -count=1 -coverprofile=coverage.out -coverpkg=./... ./...
+      - name: Coverage report
+        run: go tool cover -func=coverage.out | tail -1
 
   validate-examples:
     runs-on: ubuntu-latest
