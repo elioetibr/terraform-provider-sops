@@ -28,7 +28,7 @@ terraform {
   required_providers {
     sops = {
       source  = "elioetibr/sops"
-      version = ">= 0.1.0"
+      version = ">= 0.0.1"
     }
   }
 }
