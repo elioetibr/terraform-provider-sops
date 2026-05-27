@@ -37,7 +37,7 @@ func TestPlaintextDigest(t *testing.T) {
 	t.Run("matches stdlib sha256", func(t *testing.T) {
 		t.Parallel()
 		inputs := [][]byte{
-			[]byte{},
+			{},
 			[]byte("hello world"),
 			[]byte("abc"),
 			[]byte("some yaml:\n  key: value\n"),
