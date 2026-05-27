@@ -28,9 +28,17 @@ jobs:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - name: Install sops + age (for fixtures)
+        env:
+          SOPS_VERSION: v3.13.1
         run: |
-          curl -sL https://github.com/getsops/sops/releases/latest/download/sops-v3.10.0.linux.amd64 -o /usr/local/bin/sops
+          # Pin to an explicit release tag — using `releases/latest/download/`
+          # with a versioned asset name silently 404s when "latest" advances,
+          # and curl happily writes the HTML 404 page as the binary
+          # (chmod +x then yields "exec format error" at first call).
+          curl -fsSL "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64" \
+            -o /usr/local/bin/sops
           chmod +x /usr/local/bin/sops
+          /usr/local/bin/sops --version
           sudo apt-get update && sudo apt-get install -y age
       - run: go mod download
       - run: go vet ./...
