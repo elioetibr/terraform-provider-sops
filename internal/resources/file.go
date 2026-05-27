@@ -554,8 +554,10 @@ func metadataObjectValue(ctx context.Context, md sopswrap.Metadata) types.Object
 	return obj
 }
 
-// listOfStrings builds a types.List from a []string.
-func listOfStrings(ctx context.Context, ss []string) types.List {
+// listOfStrings builds a types.List from a []string. The ctx is part of the
+// types.MapValueFrom / ListValueFrom contract used by sibling helpers; this
+// flavour builds the value directly and does not need it.
+func listOfStrings(_ context.Context, ss []string) types.List {
 	if len(ss) == 0 {
 		l, _ := types.ListValue(types.StringType, []attr.Value{})
 		return l

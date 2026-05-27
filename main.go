@@ -1,3 +1,5 @@
+// Package main is the entry point for the terraform-provider-sops plugin
+// binary. It wires up the Terraform plugin-framework provider server.
 package main
 
 import (

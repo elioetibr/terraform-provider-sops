@@ -43,7 +43,7 @@ func TestApplyScopedEnv_RestoresBothBranches(t *testing.T) {
 }
 
 // TestApplyScopedEnv_EmptyConfigIsNoop confirms the early-return on v=="" is exercised.
-func TestApplyScopedEnv_EmptyConfigIsNoop(t *testing.T) {
+func TestApplyScopedEnv_EmptyConfigIsNoop(_ *testing.T) {
 	restore := applyScopedEnv(auth.Config{})
 	restore() // must not panic
 }

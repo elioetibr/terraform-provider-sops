@@ -17,7 +17,7 @@ func TestPlaintextDigest(t *testing.T) {
 			t.Errorf("PlaintextDigest length = %d; want 64", len(got))
 		}
 		for _, ch := range got {
-			if !((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')) {
+			if (ch < '0' || ch > '9') && (ch < 'a' || ch > 'f') {
 				t.Errorf("PlaintextDigest contains non-hex char %q in %q", ch, got)
 				break
 			}
@@ -28,8 +28,10 @@ func TestPlaintextDigest(t *testing.T) {
 	t.Run("deterministic", func(t *testing.T) {
 		t.Parallel()
 		input := []byte("some yaml:\n  key: value\n")
-		if PlaintextDigest(input) != PlaintextDigest(input) {
-			t.Error("PlaintextDigest is not deterministic")
+		first := PlaintextDigest(input)
+		second := PlaintextDigest(input)
+		if first != second {
+			t.Errorf("PlaintextDigest is not deterministic: %q vs %q", first, second)
 		}
 	})
 

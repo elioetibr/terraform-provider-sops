@@ -22,6 +22,8 @@ type sopsProvider struct {
 	version string
 }
 
+// New returns the provider factory wired with the build-time version string.
+// The framework expects a func() provider.Provider, hence the indirection.
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
 		return &sopsProvider{version: version}
@@ -52,17 +54,18 @@ func (p *sopsProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp 
 	}
 }
 
-// ProviderData is the value handed to every data source / ephemeral via req.ProviderData.
-type ProviderData struct {
+// Data is the value handed to every data source / ephemeral via
+// the framework's ConfigureRequest.ProviderData field.
+type Data struct {
 	Config auth.Config
 }
 
 // ProviderAuthConfig is the accessor downstream packages depend on without
 // importing this package's concrete type (avoids cycles).
-func (p *ProviderData) ProviderAuthConfig() auth.Config { return p.Config }
+func (p *Data) ProviderAuthConfig() auth.Config { return p.Config }
 
 func (p *sopsProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var m ProviderModel
+	var m Model
 	diags := req.Config.Get(ctx, &m)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -93,7 +96,7 @@ func (p *sopsProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		return
 	}
 
-	pd := &ProviderData{Config: cfg}
+	pd := &Data{Config: cfg}
 	resp.DataSourceData = pd
 	resp.EphemeralResourceData = pd
 }

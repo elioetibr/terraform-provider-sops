@@ -1,3 +1,4 @@
+// Package provider implements the Terraform plugin-framework SOPS provider.
 package provider
 
 import (
@@ -6,8 +7,8 @@ import (
 	"github.com/elioetibr/terraform-provider-sops/internal/provider/auth"
 )
 
-// ProviderModel is the framework data model for the `provider "sops" { ... }` block.
-type ProviderModel struct {
+// Model is the framework data model for the `provider "sops" { ... }` block.
+type Model struct {
 	AWS              *auth.AWSModel   `tfsdk:"aws"`
 	GCP              *auth.GCPModel   `tfsdk:"gcp"`
 	Azure            *auth.AzureModel `tfsdk:"azure"`
