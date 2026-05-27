@@ -1,5 +1,13 @@
 # terraform-provider-sops
 
+[![CI](https://github.com/elioetibr/terraform-provider-sops/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/elioetibr/terraform-provider-sops/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/elioetibr/terraform-provider-sops/branch/main/graph/badge.svg)](https://codecov.io/gh/elioetibr/terraform-provider-sops)
+[![Go Report Card](https://goreportcard.com/badge/github.com/elioetibr/terraform-provider-sops)](https://goreportcard.com/report/github.com/elioetibr/terraform-provider-sops)
+[![Go Reference](https://pkg.go.dev/badge/github.com/elioetibr/terraform-provider-sops.svg)](https://pkg.go.dev/github.com/elioetibr/terraform-provider-sops)
+[![Release](https://img.shields.io/github/v/release/elioetibr/terraform-provider-sops?display_name=tag&sort=semver)](https://github.com/elioetibr/terraform-provider-sops/releases)
+[![Go version](https://img.shields.io/github/go-mod/go-version/elioetibr/terraform-provider-sops)](go.mod)
+[![License: MPL-2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](LICENSE)
+
 A Terraform provider for [SOPS](https://getsops.io/) — encrypt and decrypt files at plan time without exporting `AWS_PROFILE=…` to your shell.
 
 **Key advantages over `carlpett/terraform-provider-sops`:**

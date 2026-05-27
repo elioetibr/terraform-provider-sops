@@ -1,0 +1,38 @@
+codecov:
+  require_ci_to_pass: true
+  notify:
+    wait_for_ci: true
+
+coverage:
+  precision: 1
+  round: down
+  range: "80...100"
+
+  status:
+    # Project-wide gate. Mirrors the per-file 90% goal we drove the test
+    # suite to, with a 1% threshold so trivial fluctuation doesn't block PRs.
+    project:
+      default:
+        target: 90%
+        threshold: 1%
+        if_no_uploads: error
+        if_ci_failed: error
+    # Patch coverage = new + modified lines in the PR. Match the same bar
+    # so coverage rot can't sneak in via fresh code.
+    patch:
+      default:
+        target: 90%
+        threshold: 1%
+
+# main.go is the plugin entrypoint (providerserver.Serve) and cannot be
+# unit-tested without subprocess machinery. It's the only file conventionally
+# outside the coverage gate.
+ignore:
+  - "main.go"
+  - "tools/**/*.go"      # build-tag-gated tool imports, not real code
+  - "**/*_test.go"       # tests don't measure coverage of themselves
+
+comment:
+  layout: "header, diff, flags, files, footer"
+  behavior: default
+  require_changes: false
