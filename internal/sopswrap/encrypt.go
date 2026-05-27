@@ -35,6 +35,20 @@ type EncryptResult struct {
 // Encrypt loads plaintext, constructs master keys with injected credentials,
 // generates a data key, encrypts the tree, and returns ciphertext.
 func Encrypt(ctx context.Context, in EncryptInput) (*EncryptResult, error) {
+	store, err := StoreFor(in.Format)
+	if err != nil {
+		return nil, err
+	}
+	return encryptWithStore(ctx, store, in)
+}
+
+// encryptWithStore is the core encryption flow with an injectable Store. The
+// public Encrypt looks up the Store from in.Format and delegates here; internal
+// tests can pass a stub Store that fails at a specific step (LoadPlainFile,
+// EmitPlainFile, EmitEncryptedFile) to exercise the defensive error branches
+// that the real yaml/json/dotenv/ini/binary stores never trigger from real
+// inputs.
+func encryptWithStore(ctx context.Context, store Store, in EncryptInput) (*EncryptResult, error) {
 	rel, err := getSem().Acquire(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("sopswrap: acquire semaphore: %w", err)
@@ -43,11 +57,6 @@ func Encrypt(ctx context.Context, in EncryptInput) (*EncryptResult, error) {
 
 	restore := applyScopedEnv(in.Config)
 	defer restore()
-
-	store, err := StoreFor(in.Format)
-	if err != nil {
-		return nil, err
-	}
 
 	branches, err := store.LoadPlainFile(in.Plaintext)
 	if err != nil {
@@ -96,12 +105,19 @@ func Encrypt(ctx context.Context, in EncryptInput) (*EncryptResult, error) {
 	}, nil
 }
 
-// sealTree performs the three SOPS-internal seal operations: encrypt every
-// branch value with the data key, encrypt the resulting MAC, and emit the
-// ciphertext via the store. Extracted so the defensive error branches can be
-// unit-tested with crafted inputs (a bad-length dataKey rejects tree.Encrypt).
+// sealTree wraps sealTreeWithCipher using the production AES cipher. The
+// indirection lets internal tests substitute a stub Cipher that fails after
+// the tree.Encrypt step succeeds, exercising the MAC-encrypt error path that
+// the real aes cipher never reaches with valid inputs.
 func sealTree(tree *sops.Tree, dataKey []byte, store Store) ([]byte, error) {
-	cipher := aes.NewCipher()
+	return sealTreeWithCipher(tree, dataKey, store, aes.NewCipher())
+}
+
+// sealTreeWithCipher performs the three SOPS-internal seal operations:
+// encrypt every branch value with the data key, encrypt the resulting MAC,
+// and emit the ciphertext via the store. Cipher is injectable so tests can
+// force a failure at the MAC step.
+func sealTreeWithCipher(tree *sops.Tree, dataKey []byte, store Store, cipher sops.Cipher) ([]byte, error) {
 	mac, err := tree.Encrypt(dataKey, cipher)
 	if err != nil {
 		return nil, fmt.Errorf("sopswrap: encrypt tree: %w", err)
