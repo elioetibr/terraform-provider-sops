@@ -17,6 +17,7 @@ import (
 // Format names the SOPS plaintext/ciphertext format.
 type Format string
 
+// Format constants enumerate the SOPS stores this package can dispatch to.
 const (
 	FormatYAML   Format = "yaml"
 	FormatJSON   Format = "json"

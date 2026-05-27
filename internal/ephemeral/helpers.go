@@ -66,7 +66,7 @@ func metadataAttrTypes() map[string]attr.Type {
 	}
 }
 
-func listOfStrings(ctx context.Context, ss []string) types.List {
+func listOfStrings(_ context.Context, ss []string) types.List {
 	if len(ss) == 0 {
 		l, _ := types.ListValue(types.StringType, []attr.Value{})
 		return l
