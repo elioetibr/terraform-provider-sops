@@ -48,6 +48,41 @@ jobs:
         run: go test -race -count=1 -coverprofile=coverage.out -coverpkg=./... ./...
       - name: Coverage report
         run: go tool cover -func=coverage.out | tail -1
+      - name: Write coverage summary to job summary
+        # Renders a per-file + total coverage table into the GitHub Actions
+        # run page (the "Summary" section). Surfaces coverage drift on every
+        # PR without leaving GitHub.
+        run: |
+          {
+            echo "## Coverage report (Go ${{ matrix.go }} / Terraform ${{ matrix.terraform }})"
+            echo
+            echo "| File | Covered / Total | % |"
+            echo "|---|---:|---:|"
+            awk 'NR>1 {
+              split($1, a, ":"); file=a[1]
+              total[file]+=$2
+              if ($3 > 0) covered[file]+=$2
+            }
+            END {
+              for (f in total) printf "| %s | %d / %d | %.1f%% |\n", f, covered[f]+0, total[f], (covered[f]+0)/total[f]*100
+            }' coverage.out | sort
+            echo
+            echo "**Total:** $(go tool cover -func=coverage.out | awk '/^total:/ {print $NF}')"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload coverage to Codecov
+        # Only one matrix entry uploads to avoid double-counting in codecov.
+        # Pin to the highest-supported TF version because that one runs the
+        # write-only-attribute acceptance tests and yields the broader
+        # statement coverage.
+        if: matrix.go == '1.26' && matrix.terraform == '1.11.*'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.out
+          flags: unittests,acceptance
+          fail_ci_if_error: false
+          # CODECOV_TOKEN is required because the repository is private.
+          # Set it via repo Settings -> Secrets and variables -> Actions.
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   validate-examples:
     runs-on: ubuntu-latest
