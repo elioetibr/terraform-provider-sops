@@ -5,7 +5,7 @@ go 1.26
 require (
 	github.com/getsops/sops/v3 v3.13.0
 	github.com/hashicorp/copywrite v0.25.3
-	github.com/hashicorp/terraform-plugin-docs v0.24.0
+	github.com/hashicorp/terraform-plugin-docs v0.25.0
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
 	github.com/hashicorp/terraform-plugin-go v0.31.0
 	github.com/hashicorp/terraform-plugin-testing v1.16.0
