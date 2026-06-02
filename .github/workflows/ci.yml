@@ -75,7 +75,7 @@ jobs:
         # write-only-attribute acceptance tests and yields the broader
         # statement coverage.
         if: matrix.go == '1.26' && matrix.terraform == '1.11.*'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: ./coverage.out
           flags: unittests,acceptance
